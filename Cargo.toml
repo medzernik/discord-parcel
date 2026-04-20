@@ -1,9 +1,0 @@
-[package]
-name = "medzernik-discord-parcel"
-version = "0.1.0"
-edition = "2024"
-author = "medzernik"
-
-[dependencies]
-serenity = "0.12"
-thiserror = "2.0"
