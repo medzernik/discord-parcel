@@ -12,12 +12,12 @@ pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
 
     var env = dotenv.Dotenv.init(allocator, .{});
-    defer env.deinit();
+    // defer env.deinit();
 
     try env.parseFile(".env", io);
     const token = env.get("DISCORD_TOKEN").?;
 
-    std.debug.print("TOKEN IS: {s}", .{token});
+    // std.debug.print("TOKEN IS: {s}", .{token});
 
     // const token = init.minimal.environ.getAlloc(allocator, "TOKEN") catch |err| {
     //     switch (err) {
