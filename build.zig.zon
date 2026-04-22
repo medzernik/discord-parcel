@@ -36,6 +36,10 @@
             .url = "git+https://codeberg.org/lipfang/zigcord?ref=main#7271a6c7723648dddebc76e6e62193672780ab7b",
             .hash = "zigcord-0.11.0-rrOs1vgUCADU-zAPdj0h6ihEW0rihA0FJfHHNFOQFd1K",
         },
+        .@"zig-dotenv" = .{
+            .url = "git+https://git.sr.ht/~medzernik/zig-dotenv-0.16?ref=main#8e2943ecd8dc70a56d010a3bbfe0122649b24b0f",
+            .hash = "zig_dotenv-1.1.0-eTg6iWJlAADixdYWepJBOu3KA10-5A3T65_cEZjijQBF",
+        },
     },
     .paths = .{
         "build.zig",

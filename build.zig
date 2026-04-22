@@ -85,7 +85,9 @@ pub fn build(b: *std.Build) void {
 
     const zigcord_dependency = b.dependency("zigcord", .{});
     const zigcord_module = zigcord_dependency.module("zigcord");
+    const zig_totp_dep = b.dependency("zig-dotenv", .{});
 
+    exe.root_module.addImport("zig-dotenv", zig_totp_dep.module("zig-dotenv"));
     exe.root_module.addImport("zigcord", zigcord_module);
 
     // This declares intent for the executable to be installed into the
