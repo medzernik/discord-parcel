@@ -17,17 +17,6 @@ pub fn main(init: std.process.Init) !void {
     try env.parseFile(".env", io);
     const token = env.get("DISCORD_TOKEN").?;
 
-    // std.debug.print("TOKEN IS: {s}", .{token});
-
-    // const token = init.minimal.environ.getAlloc(allocator, "TOKEN") catch |err| {
-    //     switch (err) {
-    //         error.EnvironmentVariableMissing => {
-    //             std.log.err("environment variable TOKEN is required", .{});
-    //             return;
-    //         },
-    //         else => return err,
-    //     }
-    // };
     defer allocator.free(token);
 
     var endpoint_client = zigcord.EndpointClient.init(io, allocator, .{ .bot = token });
