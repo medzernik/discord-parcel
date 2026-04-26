@@ -3,3 +3,4 @@
 /zig-pkg
 /.env
 /target
+/.DS_Store
