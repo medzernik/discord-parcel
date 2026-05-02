@@ -1,6 +1,8 @@
 const std = @import("std");
-const zigcord = @import("zigcord");
+const builtin = @import("builtin");
+
 const dotenv = @import("zig-dotenv");
+const zigcord = @import("zigcord");
 
 pub const std_options: std.Options = .{ .log_level = switch (@import("builtin").mode) {
     .Debug, .ReleaseSafe => .debug,
@@ -10,14 +12,18 @@ pub const std_options: std.Options = .{ .log_level = switch (@import("builtin").
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const allocator = init.gpa;
+    var token: []const u8 = "";
 
-    var env = dotenv.Dotenv.init(allocator, .{});
-    // defer env.deinit();
-
-    try env.parseFile(".env", io);
-    const token = env.get("DISCORD_TOKEN").?;
-
-    defer allocator.free(token);
+    if (builtin.mode == .Debug) {
+        var env = dotenv.Dotenv.init(allocator, .{});
+        try env.parseFile(".env", io);
+        token = env.get("DISCORD_TOKEN").?;
+    } else {
+        token = init.environ_map.get("DISCORD_TOKEN") orelse {
+            std.log.err("environment variable TOKEN is required", .{});
+            std.process.exit(1);
+        };
+    }
 
     var endpoint_client = zigcord.EndpointClient.init(io, allocator, .{ .bot = token });
     defer endpoint_client.deinit();

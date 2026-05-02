@@ -2,15 +2,23 @@ FROM alpine:latest AS build
 
 ARG ZIG_VER=0.16.0
 
-RUN apk add --no-cache zig curl gcc
+RUN apk add --no-cache curl xz
+
+WORKDIR /opt
+
+# Map Docker arch → Zig arch naming
+# https://ziglang.org/download/0.16.0/zig-aarch64-linux-0.16.0.tar.xz
+RUN curl -L https://ziglang.org/download/${ZIG_VER}/zig-aarch64-linux-${ZIG_VER}.tar.xz -o zig.tar.xz && \
+    tar -xvf zig.tar.xz && \
+    mv zig-aarch64-linux-${ZIG_VER} zig
+
+ENV PATH="/opt/zig:$PATH"
 
 WORKDIR /app
-
 COPY . .
 
-# Using ReleaseSmall instead of ReleaseFast - because there is no CPU intensive work
-# in this app, so ReleaseSmall will give a smaller binary / better use of CPU cache
 RUN zig build -Doptimize=ReleaseSmall
+
 
 FROM alpine:latest
 
