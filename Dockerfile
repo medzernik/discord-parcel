@@ -10,11 +10,11 @@ COPY . .
 
 # Using ReleaseSmall instead of ReleaseFast - because there is no CPU intensive work
 # in this app, so ReleaseSmall will give a smaller binary / better use of CPU cache
-RUN zig build -Doptimize=ReleaseSmall -Dtarget=arm64-linux-musl
+RUN zig build -Doptimize=ReleaseSmall
 
 FROM alpine:latest
 
-FROM scratch
+RUN apk add --no-cache ca-certificates
 
 COPY --from=build /app/zig-out/bin/medzernik_discord_parcel /server
 
