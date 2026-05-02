@@ -14,7 +14,7 @@ COPY . .
 
 # Using ReleaseSmall instead of ReleaseFast - because there is no CPU intensive work
 # in this app, so ReleaseSmall will give a smaller binary / better use of CPU cache
-RUN /opt/zig/zig build -Doptimize=ReleaseFast
+RUN /opt/zig/zig build -Doptimize=ReleaseSmall
 
 FROM debian:trixie-slim
 
@@ -22,4 +22,4 @@ RUN apt update && apt install -y ca-certificates
 
 COPY --from=build /app/zig-out/bin/medzernik_discord_parcel /server
 
-CMD ["/server"]
+CMD ["/server/medzernik_discord_parcel"]
