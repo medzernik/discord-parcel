@@ -6,7 +6,7 @@ RUN apt update && apt install -y curl xz-utils
 
 RUN curl https://ziglang.org/download/0.16.0/zig-aarch64-linux-0.16.0.tar.xz -o zig-linux.tar.xz && \
     tar xvf zig-linux.tar.xz && \
-    mv zig-linux-$(uname -m)-${ZIG_VER}/ /opt/zig
+    mv zig-linux-$(uname -m)-linux-${ZIG_VER}/ /opt/zig
 
 WORKDIR /app
 
