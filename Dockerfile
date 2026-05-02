@@ -2,7 +2,7 @@ FROM alpine:latest AS build
 
 ARG ZIG_VER=0.16.0
 
-RUN apk add --no-cache zig curl
+RUN apk add --no-cache zig curl gcc
 
 WORKDIR /app
 
