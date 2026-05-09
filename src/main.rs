@@ -6,7 +6,6 @@ use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::model::application::{Command, Interaction};
 use serenity::model::gateway::Ready;
-use serenity::model::id::GuildId;
 use serenity::prelude::*;
 
 struct Handler;
@@ -38,7 +37,11 @@ impl EventHandler for Handler {
             Command::create_global_command(&ctx.http, commands::wonderful_command::register())
                 .await;
 
+        let ping_command =
+            Command::create_global_command(&ctx.http, commands::ping::register()).await;
+
         println!("I created the following global slash command: {global_command:#?}");
+        println!("I created the following global slash command: {ping_command:#?}");
     }
 }
 
