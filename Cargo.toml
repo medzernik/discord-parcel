@@ -5,7 +5,7 @@ edition = "2024"
 author = "medzernik"
 
 [dependencies]
-dotenv = "0.15.0"
+dotenv = "0.15"
 serenity = "0.12"
 thiserror = "2.0"
-tokio = { version = "1.52.1", features = ["full"] }
+tokio = { version = "1.52", features = ["full"] }
