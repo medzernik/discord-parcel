@@ -11,4 +11,8 @@ impl BotCommands for WonderfulCommand {
     fn register() -> CreateCommand {
         CreateCommand::new("wonderful_command").description("An amazing command")
     }
+
+    fn construct_reply() -> serenity::all::CreateInteractionResponse {
+        todo!()
+    }
 }

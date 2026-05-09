@@ -1,4 +1,5 @@
 mod commands;
+mod delivery_codes;
 
 use std::env;
 
@@ -10,6 +11,9 @@ use serenity::prelude::*;
 
 use crate::commands::BotCommands;
 
+use std::sync::OnceLock;
+pub static PARCEL_TOKEN: OnceLock<String> = OnceLock::new();
+
 struct Handler;
 
 #[async_trait]
@@ -19,7 +23,7 @@ impl EventHandler for Handler {
             println!("Received command interaction: {}", command.data.name);
 
             let content = match command.data.name.as_str() {
-                "get_parcels" => Some(
+                "get_parcel" => Some(
                     commands::get_parcels::GetParcelsCommand::run(&command.data.options())
                         .await
                         .expect("critical unhandled error in GetParcelsCommand"),
@@ -64,9 +68,13 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
+
     // Configure the client with your Discord bot token in the environment.
-    let discord_token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
-    let _parcels_token = env::var("PARCELS_TOKEN").expect("Expected a token in the environment");
+    let discord_token =
+        env::var("DISCORD_TOKEN").expect("Expected a token for Discord: DISCORD_TOKEN");
+    let parcels_token = env::var("PARCEL_TOKEN").expect("expected token for parcel: PARCEL_TOKEN");
+
+    PARCEL_TOKEN.get_or_init(|| parcels_token);
 
     // Build our client.
     let intents = GatewayIntents::DIRECT_MESSAGES;
