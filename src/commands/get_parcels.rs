@@ -1,52 +1,28 @@
+use crate::{commands::CommandContext, delivery::delivery_payload::Deliveries};
 use secrecy::ExposeSecret;
-use serenity::builder::CreateCommand;
-use serenity::model::application::ResolvedOption;
 
-use crate::app_state::ApplicationStateAsync;
-use crate::commands::{BotCommands, CommandResult};
-use crate::delivery::delivery_payload::Deliveries;
+#[poise::command(slash_command)]
+/// Gets all parcels currently associated with the parcels token
+pub async fn get_parcels(ctx: CommandContext<'_>) -> Result<(), serenity::Error> {
+    let client = reqwest::Client::new();
+    let res = client
+        .post("https://api.parcel.app/external/deliveries/?")
+        .header(
+            "api-key",
+            ctx.data()
+                .get_token()
+                .ok_or(serenity::Error::Other(
+                    "missing token for parcels! set it first using a command",
+                ))?
+                .expose_secret(),
+        )
+        .send()
+        .await
+        .expect("invalid request");
 
-#[derive(thiserror::Error, Debug)]
-pub enum GetParcelError {
-    #[error("request error: {0}")]
-    GenericReqwestError(#[from] reqwest::Error),
+    let parsed_res: Deliveries =
+        serde_json::from_str(&res.text().await.expect(" cannot be converted to text"))?;
 
-    #[error("payload error: {0}")]
-    InvalidResponse(#[from] serde_json::Error),
-
-    #[error("token not present")]
-    TokenNotPresent,
-}
-
-pub struct GetParcelsCommand;
-
-impl BotCommands for GetParcelsCommand {
-    async fn run(
-        app_config: ApplicationStateAsync,
-        _options: &[ResolvedOption<'_>],
-    ) -> CommandResult {
-        let client = reqwest::Client::new();
-        let res = client
-            .post("https://api.parcel.app/external/deliveries/?")
-            .header(
-                "api-key",
-                app_config
-                    .0
-                    .read()
-                    .await
-                    .get_token()
-                    .ok_or(GetParcelError::TokenNotPresent)?
-                    .expose_secret(),
-            )
-            .send()
-            .await?;
-        let parsed_res: Deliveries = serde_json::from_str(&res.text().await?)?;
-        Ok(res.text().await?)
-    }
-
-    fn register() -> CreateCommand {
-        CreateCommand::new("get_parcel").description("Get a list of parcels")
-    }
-
-    // fn construct_reply() -> serenity::all::CreateInteractionResponse {}
+    ctx.reply(format!("{parsed_res:#?}")).await?;
+    Ok(())
 }

@@ -1,20 +1,9 @@
 use secrecy::SecretString;
-use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::RwLock;
 
 /// The actual rate limit that can be called per hour to the cached API of Parcel
 const RATE_LIMIT_HOUR_ABSOLUTE: u8 = 20;
 const DEFAULT_CHECK_PER_HOUR: u8 = 2;
-
-/// Main type to initialize
-#[derive(Debug)]
-pub struct ApplicationStateAsync(pub Arc<RwLock<ApplicationState>>);
-impl ApplicationStateAsync {
-    pub fn new() -> Self {
-        Self(Arc::new(RwLock::from(ApplicationState::new())))
-    }
-}
 
 #[derive(Debug, Error)]
 pub enum ApplicationStateError {

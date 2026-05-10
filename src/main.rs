@@ -1,91 +1,55 @@
+use log::*;
+use poise::{FrameworkError, serenity_prelude as serenity};
+
+use crate::app_state::ApplicationState;
+
 mod app_state;
 mod commands;
 mod delivery;
 
-use std::env;
-
-use debug_print::debug_println;
-use log::info;
-use secrecy::{ExposeSecret, SecretString};
-use serenity::async_trait;
-use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
-use serenity::model::application::{Command, Interaction};
-use serenity::model::gateway::Ready;
-use serenity::prelude::*;
-
-use crate::app_state::ApplicationStateAsync;
-use crate::commands::BotCommands;
-
-// Statics
-
-#[async_trait]
-impl EventHandler for ApplicationStateAsync {
-    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        if let Interaction::Command(command) = interaction {
-            println!("Received command interaction: {}", command.data.name);
-
-            let command_exec_result = match command.data.name.as_str() {
-                "get_parcel" => Some(
-                    commands::get_parcels::GetParcelsCommand::run(&command.data.options())
-                        .await
-                        .expect("critical unhandled error in GetParcelsCommand"),
-                ),
-                "wonderful_command" => Some(
-                    commands::wonderful_command::WonderfulCommand::run(&command.data.options())
-                        .await
-                        .expect("critical unhandled error in WonderfulCommand"),
-                ),
-                _ => Some("not implemented".to_string()),
-            };
-
-            if let Some(content) = command_exec_result {
-                let data = CreateInteractionResponseMessage::new().content(content);
-                let builder = CreateInteractionResponse::Message(data);
-                if let Err(err) = command.create_response(&ctx.http, builder).await {
-                    println!("Cannot respond to slash command: {err}");
-                }
-            }
-        }
-    }
-
-    async fn ready(&self, ctx: Context, ready: Ready) {
-        info!("{} is connected!", ready.user.name);
-        let global_command = Command::create_global_command(
-            &ctx.http,
-            commands::wonderful_command::WonderfulCommand::register(),
-        )
-        .await;
-
-        let cmd_get_parcels = Command::create_global_command(
-            &ctx.http,
-            commands::get_parcels::GetParcelsCommand::register(),
-        )
-        .await;
-
-        info!("I created the following global slash command: {global_command:#?}");
-        info!("I created the following global slash command: {cmd_get_parcels:#?}");
-    }
-}
+type DiscordError = Box<dyn std::error::Error + Send + Sync>;
+// type AppContext<'a> = poise::Context<'a, ApplicationState, DiscordError>;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
-    dotenv::dotenv().ok();
 
-    // initialize the application state
-    let application_state = ApplicationStateAsync::new();
-    debug_println!("{application_state:#?}");
+    let framework = poise::Framework::builder()
+        .options(poise::FrameworkOptions {
+            commands: vec![commands::get_parcels::get_parcels()],
+            on_error: |error: FrameworkError<'_, _, DiscordError>| {
+                Box::pin(async move {
+                    match error {
+                        poise::FrameworkError::ArgumentParse { error, .. } => {
+                            if let Some(error) = error.downcast_ref::<serenity::RoleParseError>() {
+                                warn!("Found a RoleParseError: {:?}", error);
+                            } else {
+                                warn!("Not a RoleParseError :(");
+                            }
+                        }
+                        other => poise::builtins::on_error(other)
+                            .await
+                            .expect("unexpected error occured"),
+                    }
+                })
+            },
+            ..Default::default()
+        })
+        .setup(move |ctx, _ready, framework| {
+            Box::pin(async move {
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                Ok(ApplicationState::new())
+            })
+        })
+        .build();
 
-    // configure the client with your Discord bot token in the environment.
-    // contrary to the parcels token, this has to be done before the bot runs, as without this token the bot has no way of running
-    let discord_token: SecretString = env::var("DISCORD_TOKEN")?.into();
+    let token = std::env::var("DISCORD_TOKEN")?;
+    let intents =
+        serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 
-    // build our client.
-    let intents = GatewayIntents::DIRECT_MESSAGES;
-    let mut client = Client::builder(discord_token.expose_secret(), intents)
-        .event_handler(application_state)
-        .await?;
+    let client = serenity::ClientBuilder::new(token, intents)
+        .framework(framework)
+        .await;
 
-    client.start().await?;
-    Ok(())
+    Ok(client?.start().await?)
 }
