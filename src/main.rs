@@ -5,6 +5,7 @@ mod delivery;
 use std::env;
 
 use debug_print::debug_println;
+use log::info;
 use secrecy::{ExposeSecret, SecretString};
 use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
@@ -48,7 +49,7 @@ impl EventHandler for ApplicationStateAsync {
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!("{} is connected!", ready.user.name);
+        info!("{} is connected!", ready.user.name);
         let global_command = Command::create_global_command(
             &ctx.http,
             commands::wonderful_command::WonderfulCommand::register(),
@@ -61,8 +62,8 @@ impl EventHandler for ApplicationStateAsync {
         )
         .await;
 
-        println!("I created the following global slash command: {global_command:#?}");
-        println!("I created the following global slash command: {cmd_get_parcels:#?}");
+        info!("I created the following global slash command: {global_command:#?}");
+        info!("I created the following global slash command: {cmd_get_parcels:#?}");
     }
 }
 

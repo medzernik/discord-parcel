@@ -9,7 +9,7 @@ const DEFAULT_CHECK_PER_HOUR: u8 = 2;
 
 /// Main type to initialize
 #[derive(Debug)]
-pub struct ApplicationStateAsync(Arc<RwLock<ApplicationState>>);
+pub struct ApplicationStateAsync(pub Arc<RwLock<ApplicationState>>);
 impl ApplicationStateAsync {
     pub fn new() -> Self {
         Self(Arc::new(RwLock::from(ApplicationState::new())))
