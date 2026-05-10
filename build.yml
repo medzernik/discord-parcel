@@ -1,0 +1,10 @@
+image: alpine/edge
+packages:
+  - rust
+tasks:
+  - compile: |
+      cargo build --release --locked
+  - test: |
+      cargo test --locked
+  - clippy: |
+      cargo clippy --locked
