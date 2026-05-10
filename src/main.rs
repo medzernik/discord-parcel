@@ -3,30 +3,27 @@ mod commands;
 mod delivery;
 
 use std::env;
-use std::sync::OnceLock;
 
+use debug_print::debug_println;
+use secrecy::{ExposeSecret, SecretString};
 use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::model::application::{Command, Interaction};
 use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 
+use crate::app_state::ApplicationStateAsync;
 use crate::commands::BotCommands;
 
 // Statics
 
-/// The actual rate limit that can be called per hour to the cached API of Parcel
-pub const RATE_LIMIT_HOUR_ABSOLUTE: u8 = 20;
-
-struct Handler;
-
 #[async_trait]
-impl EventHandler for Handler {
+impl EventHandler for ApplicationStateAsync {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::Command(command) = interaction {
             println!("Received command interaction: {}", command.data.name);
 
-            let content = match command.data.name.as_str() {
+            let command_exec_result = match command.data.name.as_str() {
                 "get_parcel" => Some(
                     commands::get_parcels::GetParcelsCommand::run(&command.data.options())
                         .await
@@ -40,11 +37,11 @@ impl EventHandler for Handler {
                 _ => Some("not implemented".to_string()),
             };
 
-            if let Some(content) = content {
+            if let Some(content) = command_exec_result {
                 let data = CreateInteractionResponseMessage::new().content(content);
                 let builder = CreateInteractionResponse::Message(data);
-                if let Err(why) = command.create_response(&ctx.http, builder).await {
-                    println!("Cannot respond to slash command: {why}");
+                if let Err(err) = command.create_response(&ctx.http, builder).await {
+                    println!("Cannot respond to slash command: {err}");
                 }
             }
         }
@@ -70,25 +67,24 @@ impl EventHandler for Handler {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
+    env_logger::init();
     dotenv::dotenv().ok();
 
-    // Configure the client with your Discord bot token in the environment.
-    let discord_token =
-        env::var("DISCORD_TOKEN").expect("Expected a token for Discord: DISCORD_TOKEN");
+    // initialize the application state
+    let application_state = ApplicationStateAsync::new();
+    debug_println!("{application_state:#?}");
 
-    // Build our client.
+    // configure the client with your Discord bot token in the environment.
+    // contrary to the parcels token, this has to be done before the bot runs, as without this token the bot has no way of running
+    let discord_token: SecretString = env::var("DISCORD_TOKEN")?.into();
+
+    // build our client.
     let intents = GatewayIntents::DIRECT_MESSAGES;
-    let mut client = Client::builder(discord_token, intents)
-        .event_handler(Handler)
-        .await
-        .expect("Error creating client");
+    let mut client = Client::builder(discord_token.expose_secret(), intents)
+        .event_handler(application_state)
+        .await?;
 
-    // Finally, start a single shard, and start listening to events.
-    //
-    // Shards will automatically attempt to reconnect, and will perform exponential backoff until
-    // it reconnects.
-    if let Err(why) = client.start().await {
-        println!("Client error: {why:?}");
-    }
+    client.start().await?;
+    Ok(())
 }

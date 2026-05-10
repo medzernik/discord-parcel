@@ -1,7 +1,6 @@
 use serenity::builder::CreateCommand;
 use serenity::model::application::ResolvedOption;
 
-use crate::PARCEL_TOKEN;
 use crate::commands::BotCommands;
 use crate::delivery::delivery_payload::Deliveries;
 
