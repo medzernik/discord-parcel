@@ -1,7 +1,9 @@
+mod app_state;
 mod commands;
-mod delivery_codes;
+mod delivery;
 
 use std::env;
+use std::sync::OnceLock;
 
 use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
@@ -11,8 +13,10 @@ use serenity::prelude::*;
 
 use crate::commands::BotCommands;
 
-use std::sync::OnceLock;
-pub static PARCEL_TOKEN: OnceLock<String> = OnceLock::new();
+// Statics
+
+/// The actual rate limit that can be called per hour to the cached API of Parcel
+pub const RATE_LIMIT_HOUR_ABSOLUTE: u8 = 20;
 
 struct Handler;
 
@@ -72,9 +76,6 @@ async fn main() {
     // Configure the client with your Discord bot token in the environment.
     let discord_token =
         env::var("DISCORD_TOKEN").expect("Expected a token for Discord: DISCORD_TOKEN");
-    let parcels_token = env::var("PARCEL_TOKEN").expect("expected token for parcel: PARCEL_TOKEN");
-
-    PARCEL_TOKEN.get_or_init(|| parcels_token);
 
     // Build our client.
     let intents = GatewayIntents::DIRECT_MESSAGES;

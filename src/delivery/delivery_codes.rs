@@ -10,6 +10,9 @@
 // 7 - delivery exception, something is wrong and requires your attention.
 // 8 - carrier has received information about a package, but has not physically received it yet.
 
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize)]
 pub enum DeliveryStatus {
     Completed,
     Frozen,

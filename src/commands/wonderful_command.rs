@@ -12,7 +12,7 @@ impl BotCommands for WonderfulCommand {
         CreateCommand::new("wonderful_command").description("An amazing command")
     }
 
-    fn construct_reply() -> serenity::all::CreateInteractionResponse {
-        todo!()
-    }
+    // fn construct_reply() -> serenity::all::CreateInteractionResponse {
+    //     todo!()
+    // }
 }
